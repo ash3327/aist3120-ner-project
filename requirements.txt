@@ -8,7 +8,10 @@ torchvision
 torchaudio
 
 # spacy
-spacy
+spacy<3.8.0
 
 # nltk
 nltk
+
+# transformers
+transformers

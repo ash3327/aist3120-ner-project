@@ -1,0 +1,1 @@
+from .fine_tuned_ner import BertNER

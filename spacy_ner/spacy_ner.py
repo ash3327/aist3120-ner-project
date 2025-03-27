@@ -1,9 +1,14 @@
+import sys
+sys.path.append('.')
+
 import spacy
 from datasets import load_dataset
 from spacy.tokens import Doc
 import random
 
-class SpacyNER:
+from libs import NER
+
+class SpacyNER(NER):
     def __init__(self, model_name="en_core_web_md", ignore_types=None):
         self.nlp = spacy.load(model_name)
         self.ignore_types = ignore_types or []  # List of spaCy entity types to ignore
