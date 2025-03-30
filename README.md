@@ -26,6 +26,17 @@
   * **Prerequisites:** `python -m spacy download <model_name>`, eg `en_core_web_md`.
 * **Pre-trained model for NER** | [Source](https://huggingface.co/dslim/bert-large-NER)
   * This is fine-tuned on CoNLL-2003 dataset.
+* `train_masked_bert.py`
+
+## Papers Related
+
+* Named Entity Recognition Using BERT with Whole
+World Masking in Cybersecurity Domain (2021) | [Paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9403180)
+
+### Other References
+
+* https://huggingface.co/docs/transformers/main/en/tasks/masked_language_modeling
+* https://huggingface.co/docs/transformers/main/en/tasks/token_classification
 
 ## Metric
 
@@ -40,8 +51,18 @@ Metric: Precision/Recall/F1 Score
 
 <sup>#</sup>Hashtag: implies that this is a model that is already ready-to-use without fine-tuning or improvements.
 
-| Model | Test Script |  CoNLL-2003 (train) | CoNLL-2003 (test) | WikiAnn (train) | WikiAnn (test) |
-| ---   | ---         | ---       | ---    | ---      | --- |
-| Spacy*<sup>#</sup> | `test_spacy_map.py` | | 0.3849/0.5649/0.4578 |
-| Spacy*<sup>#</sup> | `eval/eval_spacy.py` | 0.6932/0.6071/0.6473 | 0.6618/0.5758/0.6158 | 0.4046/0.3972/0.4009 | 0.4002/0.3905/0.3953 |
-| Bert-Large-NER (dslim)<sup>#</sup> | `eval/eval_ftner_pretrained.py` | 0.8757/0.9013/0.8883 | 0.8302/0.8637/0.8466 | 0.4209/0.5083/0.4605
+| Model | Test Script |  CoNLL-2003 (train) | CoNLL-2003 (validation) | CoNLL-2003 (test) | WikiAnn (train) | WikiAnn (validation) | WikiAnn (test) |
+| ---   | ---  | ---       | ---       | ---    | ---    |--  | --- |
+| Spacy*<sup>#</sup> | `test_spacy_map.py` | | | 0.3849/0.5649/0.4578 |
+| Spacy*<sup>#</sup> | `eval/eval_spacy.py` | 0.6932/0.6071/0.6473 | 0.7273/0.6390/0.6803 | 0.6618/0.5758/0.6158 | 0.4046/0.3972/0.4009 | 0.4192/0.4131/0.4161 | 0.4002/0.3905/0.3953 |
+| Bert-Large-NER (dslim)<sup>#</sup> | `eval/eval_ftner_pretrained.py` | 0.8757/0.9013/0.8883 | 0.8310/0.8706/0.8503 | 0.8302/0.8637/0.8466 |  | 0.4241/0.5150/0.4652 | 0.4209/0.5083/0.4605
+| Bert-FT-v1 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v1` (3 epochs, masked) | | | 0.7009/0.7397/0.7198 ||| 0.3153/0.3936/0.3501
+| Bert-FT-v2 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v2` (5 epochs, masked) | | | 0.6741/0.7153/0.6941 ||| 0.3153/0.3936/0.3501
+| Bert-FT-v3 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v3` (10 epochs, masked, evaluated with self-defined aggregation strategy (discards incomplete tokens)) | | | 0.6729/0.7151/0.6934 ||| 0.2947/0.3705/0.3283
+| Bert-FT-v3 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v3` (evaluated with `aggregation_strategy="simple"`) | | | 0.6095/0.6972/0.6504 |
+| Bert-FT-v3 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v3` (evaluated with `aggregation_strategy="first"`) | | | 0.8253/0.8693/0.8468 |
+| Bert-FT-v3 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v3` (evaluated with `aggregation_strategy="max"`) | | | 0.8356/0.8497/0.8426 |
+| Bert-Large-NER (dslim)<sup>#</sup> | `eval/eval_ftner_pretrained.py` (evaluated with `aggregation_strategy="max"`) ||| 0.8637/0.8867/0.8751 ||| 0.4163/0.5158/0.4607
+| Bert-FT-v1 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v1` (evaluated with `aggregation_strategy="max"`) | | | 0.8425/0.8467/0.8446 |
+| Bert-Base-NER (dslim)<sup>#</sup> | `masked_bert/masked_bert_ner.py --model_name dslim/bert-base-NER` (evaluated with `aggregation_strategy="max"`) |||0.8359/0.8817/0.8582|||0.4128/0.4943/0.4499
+| Bert-FT-v4 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v1` (evaluated with `aggregation_strategy="max"`, fine-tund upon Bert-Base-NER (dslim)) | | | 0.8450/0.8860/0.8650 ||| 0.3869/0.4953/0.4344
