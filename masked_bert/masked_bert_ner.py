@@ -41,53 +41,42 @@ class MaskedBertNER(NER):
         ner_results = self.nlp(example)
         # return [(result['entity_group'],process_text(result['word'])) for result in ner_results if result['entity_group'] != 'O']
         # ner_tokens = self.nlp.tokenizer.tokenize(example)
-        ner_tokens = [[(v,i) for v in self.nlp.tokenizer.tokenize(token)] for i,token in enumerate(tokens)]
+        ner_tokens = [[(v,i,j) for j,v in enumerate(self.nlp.tokenizer.tokenize(token))] for i,token in enumerate(tokens)]
         ner_tokens = [ner_token for sublist in ner_tokens for ner_token in sublist] # flatten
         # subword_to_orig = [orig for (subword, orig) in ner_tokens] #
 
         # print()
-        print(tokens,'\n\t',ner_results, '\n\t',ner_tokens)
+        # print(tokens,'\n\t',ner_results, '\n\t',ner_tokens)
 
         if len(ner_results) == 0:
             return []
         
         out = list()
         lastid = -1
-        lastitem = None
         lastlabel = None
+        lastitem = None
 
-        def continue_text():
-            nonlocal lastid, lastitem, lastlabel
-            if lastitem:
-                for i in range(lastid, len(ner_tokens)): # assign the other parts of the word to the same word.
-                    if ner_tokens[i][0].startswith('##'):
-                        lastitem += ner_tokens[i][0][2:]
-                    else:
-                        break
-                # if tokens == ['Portuguesa', '1', 'Atletico', 'Mineiro', '0']:
-                #     print(lastlabel, lastitem, ner_tokens[lastid:])
-                out.append((lastlabel, lastitem))
+        def insert_entity(cls, entity):
+            out.append((cls, entity))
 
         for result in ner_results:
-            if result['index'] == lastid+1 and result['entity'] == f'I-{lastlabel}':
-                if result['word'].startswith('##'):
-                    lastitem += result['word'][2:]
-                elif result['word'] in self.puncts:
-                    lastitem += result['word']
-                else:
-                    lastitem += ' ' + result['word']
-                lastid += 1
-            else:
-                continue_text()
-                if result['word'].startswith('##'):
-                    lastid = -1
-                    lastitem = None
-                    lastlabel = None
-                else:
-                    lastid = result['index']
-                    lastitem = result['word']
-                    lastlabel = result['entity'][2:]
-        continue_text()
+            id = result['index']-1
+            if ner_tokens[id][1] <= lastid or ner_tokens[id][2] != 0:
+                continue
+            # print('##',result, (result['entity'][2:], tokens[ner_tokens[id][1]]))
+            if result['entity'].startswith('B-'):
+                if lastitem is not None:
+                    insert_entity(lastlabel, lastitem)
+                lastlabel = result['entity'][2:]
+                lastitem = tokens[ner_tokens[id][1]]
+            elif result['entity'].startswith('I-'):
+                if lastitem is not None:
+                    lastitem += ' ' + tokens[ner_tokens[id][1]]
+            # out.append((result['entity'][2:], tokens[ner_tokens[id][1]]))
+            lastid = ner_tokens[id][1]
+            
+        if lastitem is not None:
+            insert_entity(lastlabel, lastitem)
         # out.append((lastlabel, lastitem))
 
         return out
@@ -147,12 +136,12 @@ def main():
     ner_compare = MaskedBertNER(model_name=args.model_name)
 
     # print(ner_compare.get_entities(['Robert', 'Galvin']))
-    print(ner_compare.get_entities(['CRICKET', '-', 'SHEFFIELD', 'SHIELD', 'SCORE', '.']))
-    print(ner_compare.get_entities(['Pau-Orthez', '(', 'France', ')', '9', '5', '4', '14']))
-    print(ner_compare.get_entities(['10.', 'Troy', 'Benson', '(', 'U.S.', ')', '22.56']))
+    # print(ner_compare.get_entities(['CRICKET', '-', 'SHEFFIELD', 'SHIELD', 'SCORE', '.']))
+    # print(ner_compare.get_entities(['Pau-Orthez', '(', 'France', ')', '9', '5', '4', '14']))
+    # print(ner_compare.get_entities(['10.', 'Troy', 'Benson', '(', 'U.S.', ')', '22.56']))
     # print(ner_compare.get_entities(['Lara', 'looked', 'out', 'of', 'touch', 'during', 'his', 'brief', 'stay', 'at', 'the', 'crease', 'before', 'chipping', 'a', 'simple', 'catch', 'to', 'Shane', 'Warne', 'at', 'mid-wicket', '.']))
-    # Eval.evaluate_dataset(ner_compare, dataset="conll", split="test")
-    # Eval.evaluate_dataset(ner_compare, dataset="wikiann", split="test")
+    Eval.evaluate_dataset(ner_compare, dataset="conll", split="test")
+    Eval.evaluate_dataset(ner_compare, dataset="wikiann", split="test")
 
 if __name__ == "__main__":
     main()

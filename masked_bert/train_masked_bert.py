@@ -137,10 +137,13 @@ def main(checkpoint_path=None):
     require_reinitlialize = True # v1,v2,v3
     require_reinitlialize = True # v4
 
-    output_dir = "runs/bert_ft_v4"
-    num_epochs = 3
-    batch_size = 32 # v1,v2,v3
-    batch_size = 16 # v4
+    output_dir = "runs/bert_ft_v5"
+    num_epochs = 3 # v1-v4
+    num_epochs = 30
+    batch_size = 32 # v1,v2,v3,v5
+    # batch_size = 16 # v4
+    lr, weight_decay = 2e-5, 0.01 # v1-v4
+    lr, weight_decay = 2e-6, 0.001 # v5
     # =====================================================
     
     # Initialize tokenizer
@@ -177,11 +180,11 @@ def main(checkpoint_path=None):
     training_args = TrainingArguments(
         output_dir=output_dir,
         overwrite_output_dir=True,  # Ensure old checkpoints are overwritten
-        learning_rate=2e-5,
+        learning_rate=lr,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         num_train_epochs=num_epochs,
-        weight_decay=0.01,
+        weight_decay=weight_decay,
         evaluation_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
