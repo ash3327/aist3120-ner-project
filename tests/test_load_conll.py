@@ -18,6 +18,10 @@ CHUNK_TAGS = {'O': 0, 'B-ADJP': 1, 'I-ADJP': 2, 'B-ADVP': 3, 'I-ADVP': 4, 'B-CON
 NER_TAGS = {'O': 0, 'B-PER': 1, 'I-PER': 2, 'B-ORG': 3, 'I-ORG': 4, 'B-LOC': 5, 'I-LOC': 6, 'B-MISC': 7, 'I-MISC': 8}
 REV_NER_TAGS = {v:k for k,v in NER_TAGS.items()}
 
-data = dataset['train'][0]
-print(data)
-print(list(map(REV_NER_TAGS.get, data['ner_tags'].numpy().tolist())))
+for i in range(200, 500):
+    data = dataset['train'][i]
+    for token in data['tokens']:
+        print(token, end=" ")
+    print()
+    print(list(map(REV_NER_TAGS.get, data['ner_tags'].numpy().tolist())))
+    print("="*50)

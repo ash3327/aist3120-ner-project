@@ -21,3 +21,6 @@ seqeval
 
 # https://github.com/yumoh/torchcrf
 torchcrf
+
+# openai
+openai
