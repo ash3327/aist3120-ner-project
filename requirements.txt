@@ -1,5 +1,6 @@
 # dataset
 datasets
+evaluate
 
 # pytorch
 --extra-index-url https://download.pytorch.org/whl/cu118
@@ -15,6 +16,8 @@ nltk
 
 # transformers
 transformers
+accelerate>=0.26.0
+seqeval
 
-# opemai
+# openai
 openai

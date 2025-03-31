@@ -11,10 +11,10 @@ from libs import NER
 class BertNER(NER):
     def __init__(self, model_name="dslim/bert-large-NER", *args, **kwargs):
         self.puncts = punctuation
-        tokenizer = AutoTokenizer.from_pretrained("dslim/bert-large-NER")
-        model = AutoModelForTokenClassification.from_pretrained("dslim/bert-large-NER")
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForTokenClassification.from_pretrained(model_name)
 
-        self.nlp = pipeline("ner", model=model, tokenizer=tokenizer)
+        self.nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="max")
     
     def get_entities(self, tokens):
         """
@@ -27,45 +27,16 @@ class BertNER(NER):
             list: List of [label, entity string]
         """
         example = ' '.join(tokens)
+
+        def process_text(text):
+            return text.replace(' - ', '-')
+        
+        example = process_text(example)  # Fix for hyphenated words
         for punct in self.puncts:
             example = example.replace(' '+punct, punct)
 
         ner_results = self.nlp(example)
-        # print(ner_results)
-        # token_ids = tokenizer(example)['input_ids']
-        # tokens = tokenizer.convert_ids_to_tokens(token_ids)
-        # print(tokens)
-        if len(ner_results) == 0:
-            return []
-        
-        out = list()
-        lastid = ner_results[0]['index']
-        lastitem = ner_results[0]['word']
-        lastlabel = ner_results[0]['entity'][2:]
-
-        for result in ner_results[1:]:
-            if result['index'] == lastid+1:
-                if result['word'].startswith('##'):
-                    lastitem += result['word'][2:]
-                elif result['word'] in self.puncts:
-                    lastitem += result['word']
-                else:
-                    lastitem += ' ' + result['word']
-                lastid += 1
-            else:
-                if lastitem:
-                    out.append((lastlabel, lastitem))
-                if result['word'].startswith('##'):
-                    lastid = -1
-                    lastitem = None
-                    lastlabel = None
-                else:
-                    lastid = result['index']
-                    lastitem = result['word']
-                    lastlabel = result['entity'][2:]
-        out.append((lastlabel, lastitem))
-
-        return out
+        return [(result['entity_group'],process_text(result['word'])) for result in ner_results if result['entity_group'] != 'O']
     
 def main(dataset="conll", split="test"):
     # Create NER comparison object

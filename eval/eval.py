@@ -89,6 +89,14 @@ class Eval:
         true_positives = sum(1 for entity in gold_entities if entity in pred_entities)
         false_positives = len(pred_entities) - true_positives
         false_negatives = len(gold_entities) - true_positives
+
+        # fp, fn = [entity for entity in pred_entities if entity not in gold_entities], [entity for entity in gold_entities if entity not in pred_entities]
+        # if fp or fn:
+        #     print()
+        #     print(tokens)
+        #     print("False Positives", fp)
+        #     print("False Negatives", fn)
+        #     print("Predicted entities:", pred_entities)
         
         # Calculate metrics
         precision = true_positives / (true_positives + false_positives) if true_positives + false_positives > 0 else 0

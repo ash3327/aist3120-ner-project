@@ -5,6 +5,15 @@
 /venv/
 
 # =========================
+# Checkpoints
+# =========================
+*.safetensors
+*.bin
+*.pth
+*.pt
+checkpoint-*/
+
+# =========================
 # Spacy
 # =========================
 # Byte-compiled / optimized / DLL files

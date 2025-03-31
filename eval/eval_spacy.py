@@ -17,6 +17,8 @@ def main(dataset="conll", split="test"):
 
 if __name__ == "__main__":
     main(dataset="conll", split="test")
+    main(dataset="conll", split="validation")
     main(dataset="conll", split="train")
     main(dataset="wikiann", split="test")
+    main(dataset="wikiann", split="validation")
     main(dataset="wikiann", split="train")
