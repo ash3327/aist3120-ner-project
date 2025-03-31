@@ -104,6 +104,14 @@ class llmNER(NER):
         output: {
             "entities": []
         } 
+
+        text: "TENNIS - AUSTRALIANS ADVANCE AT CANADIAN OPEN ."
+        output: {
+            "entities": [
+                {"label": "MISCELLANEOUS", "text": "AUSTRALIANS"},
+                {"label": "MISCELLANEOUS", "text": "CANADIAN OPEN"}
+            ]
+        }   
         """ if self.few_shot else ""
 
         system_end_prompt = """
