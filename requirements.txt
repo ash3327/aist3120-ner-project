@@ -15,3 +15,6 @@ nltk
 
 # transformers
 transformers
+
+# opemai
+openai
