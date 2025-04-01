@@ -73,3 +73,5 @@ Metric: Precision/Recall/F1 Score
 | Bert-Base-NER (dslim)<sup>#</sup> | `masked_bert/evaluate_model.py --checkpoint_path dslim/bert-base-NER` (evaluated with seqeval) |||UNABLE TO PREDICT AS EXPECTED|||
 | Bert-FT-v1 | `masked_bert/evaluate_model.py --checkpoint_path runs/bert_ft_v1` (evaluated with seqeval, fine-tund upon Bert-Base-NER (dslim)) | | | 0.8769/0.8945/0.8856||| 0.4057/0.4968/0.4466
 | Bert-FT-v4 | `masked_bert/evaluate_model.py --checkpoint_path runs/bert_ft_v4` (evaluated with seqeval, fine-tund upon Bert-Base-NER (dslim)) | | | 0.9021/0.9186/0.9106||| 0.4257/0.5163/0.4666
+| LLM (zero-shot) | `eval/eval_llm.py` model name: `gemma-3-27b-it` | | | 0.6361/0.7489/0.6879 | | | |
+| LLM (few-shot) | `eval/eval_llm.py` model name: `gemma-3-27b-it` | | | 0.6689/0.7620/0.7125 | | | |
