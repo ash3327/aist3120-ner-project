@@ -79,6 +79,7 @@ Metric: Precision/Recall/F1 Score
 | ---   | ---  | ---       | ---       | ---    | ---    |--  | --- |
 | Spacy*<sup>#</sup> | `test_spacy_map.py` | | | 0.3849/0.5649/0.4578 |
 | Spacy*<sup>#</sup> | `eval/eval_spacy.py` | 0.6932/0.6071/0.6473 | 0.7273/0.6390/0.6803 | 0.6618/0.5758/0.6158 | 0.4046/0.3972/0.4009 | 0.4192/0.4131/0.4161 | 0.4002/0.3905/0.3953 |
+| Spacy (Transformer)*<sup>#</sup> | `eval/eval_spacy.py` | 0.8062/0.7254/0.7636 | 0.8218/0.7511/0.7848 | 0.8086/0.7190/0.7612 | 0.4706/0.4440/0.4569 | 0.4801/0.4610/0.4704 | 0.4758/0.4538/0.4645 |
 | Bert-Large-NER (dslim)<sup>#</sup> | `eval/eval_ftner_pretrained.py` | 0.8757/0.9013/0.8883 | 0.8310/0.8706/0.8503 | 0.8302/0.8637/0.8466 |  | 0.4241/0.5150/0.4652 | 0.4209/0.5083/0.4605
 | Bert-FT-v1 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v1` (3 epochs, masked, fine-tuned on Bert-Base-Cased) | | | 0.7009/0.7397/0.7198 ||| 0.3153/0.3936/0.3501
 | Bert-FT-v2 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v2` (5 epochs, masked) | | | 0.6741/0.7153/0.6941 ||| 0.3153/0.3936/0.3501
