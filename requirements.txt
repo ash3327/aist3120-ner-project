@@ -19,5 +19,8 @@ transformers
 accelerate>=0.26.0
 seqeval
 
+# https://github.com/yumoh/torchcrf
+torchcrf
+
 # openai
 openai

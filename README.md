@@ -27,6 +27,10 @@
 * **Pre-trained model for NER** | [Source](https://huggingface.co/dslim/bert-large-NER)
   * This is fine-tuned on CoNLL-2003 dataset.
 * `train_masked_bert.py`
+  * v4: Fine-tune with the masked dataset for 3 epochs based on dslim/bert-base-NER.
+  * v5: Fine-tune with the masked dataset for 9 epochs (same model as v4), with 1/3 the learning rate and lr decay. This is because 3 epochs may not allow the model to learn effectively from the masked dataset (due to random nature of the dataset).
+  * nomask_v1 ([Reference](https://github.com/Louis-udm/NER-BERT-CRF)): 15 epochs, trained with raw dataset without masking,fine-tuned upon distilbert-base-cased.
+  * 
 
 ## Papers Related
 
@@ -40,10 +44,30 @@ World Masking in Cybersecurity Domain (2021) | [Paper](https://ieeexplore.ieee.o
 
 ## Metric
 
-F-$\beta$ score, reduces to F-1 score when $\beta=1$:
+$\text{F-}\beta$ score, reduces to F-1 score when $\beta=1$:
 $$F_\beta=\frac{(\beta^2+1)\times\text{precision}\times\text{recall}}{\beta^2\times\text{precision}+\text{recall}}$$
 
 where, precision and recalls are evaluated on whether the named entity is being identified (and matches exactly as the one in the data file).
+
+## Aggregation Methods
+
+* Custom Decoding (Implemented by Square): Token-wise merging of class labels.
+  * Problems: Sometimes words are truncated.
+  * Example:
+    ```
+    False Positives [('PER', 'Shane War')]
+    False Negatives [('PER', 'Shane Warne')]
+    ```
+* aggregation_strategy="max": Runs best among different aggregation strategies.
+  * Problems: Since tokenization can be different, sometimes words that were in the same "token" in the input does not stay as the same token after Bert tokenization, which make aggregation fail to cover that.
+  * Example: 
+    ```python
+    'Pau-Orthez' # Input token
+    'Pau', 'Orthez' # Output ('-' is not classified as a part of the name)
+    ```
+* v3 aggregation strategy:
+  * Custom aggregation strategy in `masked_bert_ner.py` that ensures that each input token is treated as a whole.
+* Seqeval: Package for evaluation.
 
 ## Results (*raw)
 
@@ -70,8 +94,15 @@ Metric: Precision/Recall/F1 Score
 | Bert-Base-NER (dslim)<sup>#</sup> | `masked_bert/masked_bert_ner.py --model_name dslim/bert-base-NER` (evaluated with v3 aggregation strategy) |||0.9124/0.9189/0.9157|||0.4786/0.5287/0.5024
 | Bert-FT-v1 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v1` (evaluated with v3 aggregation strategy, fine-tund upon Bert-Base-NER (dslim)) | | | 0.8929/0.89480.8939|||0.4577/0.5080/0.4816
 | Bert-FT-v4 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v4` (evaluated with v3 aggregation strategy, fine-tund upon Bert-Base-NER (dslim)) | | | 0.9080/0.9171/0.9125 ||| 0.4583/0.5215/0.4879
+| Bert-FT-v5 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v5` (evaluated with v3 aggregation strategy, fine-tund upon Bert-Base-NER (dslim)) | | | 0.9080/0.9170/0.9124 ||| 0.4572/0.5191/0.4862
+| Bert-FT-nomask-v1 | `masked_bert/masked_bert_ner.py --model_name runs/bert_ft_nomask_v1` (evaluated with v3 aggregation strategy, fine-tund upon distilbert-base-cased) | | | 0.8927/0.9032/0.8979 |||0.4603/0.5134/0.4854
+| LLM (zero-shot) | `eval/eval_llm.py` model name: `gemma-3-27b-it` | | | 0.6361/0.7489/0.6879 | | | |
+| LLM (few-shot) | `eval/eval_llm.py` model name: `gemma-3-27b-it` | | | 0.6689/0.7620/0.7125 | | | |
+
+## Results (non-optimal evaluation metrics)
+
+| Model | Test Script |  CoNLL-2003 (train) | CoNLL-2003 (validation) | CoNLL-2003 (test) | WikiAnn (train) | WikiAnn (validation) | WikiAnn (test) |
+| ---   | ---  | ---       | ---       | ---    | ---    |--  | --- |
 | Bert-Base-NER (dslim)<sup>#</sup> | `masked_bert/evaluate_model.py --checkpoint_path dslim/bert-base-NER` (evaluated with seqeval) |||UNABLE TO PREDICT AS EXPECTED|||
 | Bert-FT-v1 | `masked_bert/evaluate_model.py --checkpoint_path runs/bert_ft_v1` (evaluated with seqeval, fine-tund upon Bert-Base-NER (dslim)) | | | 0.8769/0.8945/0.8856||| 0.4057/0.4968/0.4466
 | Bert-FT-v4 | `masked_bert/evaluate_model.py --checkpoint_path runs/bert_ft_v4` (evaluated with seqeval, fine-tund upon Bert-Base-NER (dslim)) | | | 0.9021/0.9186/0.9106||| 0.4257/0.5163/0.4666
-| LLM (zero-shot) | `eval/eval_llm.py` model name: `gemma-3-27b-it` | | | 0.6361/0.7489/0.6879 | | | |
-| LLM (few-shot) | `eval/eval_llm.py` model name: `gemma-3-27b-it` | | | 0.6689/0.7620/0.7125 | | | |

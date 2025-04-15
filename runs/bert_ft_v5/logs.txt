@@ -1,0 +1,32 @@
+Loading CoNLL-2003 dataset...
+Initializing new model...
+Some weights of the model checkpoint at dslim/bert-base-NER were not used when initializing BertForTokenClassification: ['bert.pooler.dense.bias', 'bert.pooler.dense.weight']
+- This IS expected if you are initializing BertForTokenClassification from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing BertForTokenClassification from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+D:\kht3327\_Projects\aist3120-ner-project\venv\Lib\site-packages\transformers\training_args.py:1611: FutureWarning: `evaluation_strategy` is deprecated and will be removed in version 4.46 of 🤗 Transformers. Use `eval_strategy` instead
+  warnings.warn(
+D:\kht3327\_Projects\aist3120-ner-project\masked_bert\train_masked_bert.py:199: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Trainer.__init__`. Use `processing_class` instead.     
+  trainer = Trainer(
+Starting training...
+{'eval_loss': 0.04599319398403168, 'eval_precision': 0.9379586390927285, 'eval_recall': 0.9464826657691013, 'eval_f1': 0.9422013737644497, 'eval_accuracy': 0.9906350998792882, 'eval_runtime': 49.8573, 'eval_samples_per_second': 65.186, 'eval_steps_per_second': 2.046, 'epoch': 1.0}
+{'loss': 0.1266, 'grad_norm': 0.5513336658477783, 'learning_rate': 5.822998397030288e-06, 'epoch': 1.14}     
+{'eval_loss': 0.045277100056409836, 'eval_precision': 0.9395961955614884, 'eval_recall': 0.9476607202961965, 'eval_f1': 0.9436112274821952, 'eval_accuracy': 0.9907129784665706, 'eval_runtime': 49.8596, 'eval_samples_per_second': 65.183, 'eval_steps_per_second': 2.046, 'epoch': 2.0}
+{'loss': 0.0186, 'grad_norm': 0.49312159419059753, 'learning_rate': 4.979330127393909e-06, 'epoch': 2.28}    
+{'eval_loss': 0.045970674604177475, 'eval_precision': 0.9440080227310713, 'eval_recall': 0.9505217098619994, 'eval_f1': 0.9472536687631028, 'eval_accuracy': 0.9910634321093416, 'eval_runtime': 49.8177, 'eval_samples_per_second': 65.238, 'eval_steps_per_second': 2.047, 'epoch': 3.0}
+{'loss': 0.0146, 'grad_norm': 0.230659618973732, 'learning_rate': 4.1356618577575304e-06, 'epoch': 3.42}     
+{'eval_loss': 0.04713694378733635, 'eval_precision': 0.9443143812709031, 'eval_recall': 0.9503534163581285, 'eval_f1': 0.9473242744505955, 'eval_accuracy': 0.9911802499902652, 'eval_runtime': 49.9694, 'eval_samples_per_second': 65.04, 'eval_steps_per_second': 2.041, 'epoch': 4.0}
+{'loss': 0.0127, 'grad_norm': 6.708595275878906, 'learning_rate': 3.291993588121151e-06, 'epoch': 4.56}      
+{'eval_loss': 0.04620609059929848, 'eval_precision': 0.9461268194746528, 'eval_recall': 0.9516997643890945, 'eval_f1': 0.948905109489051, 'eval_accuracy': 0.9913554768116506, 'eval_runtime': 50.6025, 'eval_samples_per_second': 64.226, 'eval_steps_per_second': 2.016, 'epoch': 5.0}
+{'loss': 0.0115, 'grad_norm': 0.16273443400859833, 'learning_rate': 2.448325318484772e-06, 'epoch': 5.69}    
+{'eval_loss': 0.04690329357981682, 'eval_precision': 0.945214631702021, 'eval_recall': 0.9523729384045776, 'eval_f1': 0.9487802833431135, 'eval_accuracy': 0.9913360071648301, 'eval_runtime': 53.2187, 'eval_samples_per_second': 61.069, 'eval_steps_per_second': 1.917, 'epoch': 6.0}
+{'loss': 0.0102, 'grad_norm': 0.47646185755729675, 'learning_rate': 1.604657048848393e-06, 'epoch': 6.83}    
+{'eval_loss': 0.04720744863152504, 'eval_precision': 0.9484432541011047, 'eval_recall': 0.9535509929316729, 'eval_f1': 0.950990265189661, 'eval_accuracy': 0.9914722946925743, 'eval_runtime': 50.1486, 'eval_samples_per_second': 64.807, 'eval_steps_per_second': 2.034, 'epoch': 7.0}
+{'loss': 0.0103, 'grad_norm': 0.0637638196349144, 'learning_rate': 7.609887792120139e-07, 'epoch': 7.97}     
+{'eval_loss': 0.047608230262994766, 'eval_precision': 0.948469131671407, 'eval_recall': 0.9540558734432851, 'eval_f1': 0.9512542998573706, 'eval_accuracy': 0.9915307036330361, 'eval_runtime': 49.2734, 'eval_samples_per_second': 65.958, 'eval_steps_per_second': 2.07, 'epoch': 8.0}
+{'eval_loss': 0.047552019357681274, 'eval_precision': 0.946989966555184, 'eval_recall': 0.9530461124200605, 'eval_f1': 0.9500083878543868, 'eval_accuracy': 0.9914138857521124, 'eval_runtime': 54.003, 'eval_samples_per_second': 60.182, 'eval_steps_per_second': 1.889, 'epoch': 9.0}
+{'train_runtime': 51935.5911, 'train_samples_per_second': 2.433, 'train_steps_per_second': 0.076, 'train_loss': 0.02700149412548593, 'epoch': 9.0}
+100%|████████████████████████████████████████████████████████████████| 3951/3951 [14:25:35<00:00, 13.14s/it] 
+Saving model to runs/bert_ft_v5
+100%|█████████████████████████████████████████████████████████████████████| 108/108 [00:57<00:00,  1.89it/s]
+
+Final test metrics: {'eval_loss': 0.14255036413669586, 'eval_precision': 0.9025748086290883, 'eval_recall': 0.9185552407932012, 'eval_f1': 0.9104949104949106, 'eval_accuracy': 0.9821040163669645, 'eval_runtime': 58.1143, 'eval_samples_per_second': 59.417, 'eval_steps_per_second': 1.858, 'epoch': 9.0}
