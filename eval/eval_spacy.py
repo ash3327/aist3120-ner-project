@@ -11,7 +11,7 @@ from eval import Eval
 def main(dataset="conll", split="test"):
     # Create NER comparison object
     ignore_types = ['DATE', 'TIME', 'CARDINAL', 'ORDINAL', 'MONEY', 'PERCENT', 'QUANTITY', 'PRODUCT', 'WORK_OF_ART']
-    ner_compare = SpacyNER(ignore_types=ignore_types)
+    ner_compare = SpacyNER(ignore_types=ignore_types, model_name="en_core_web_trf")
 
     Eval.evaluate_dataset(ner_compare, dataset, split)
 
