@@ -4,6 +4,7 @@ sys.path.append('.')
 
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
+from torch import cuda
 from string import punctuation
 
 from eval import Eval
@@ -16,8 +17,11 @@ class MaskedBertNER(NER):
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForTokenClassification.from_pretrained(model_name)
 
+        device = "cuda:0" if cuda.is_available() else "cpu"
+        model = model.to(device)
+
         # self.nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="max")
-        self.nlp = pipeline("ner", model=model, tokenizer=tokenizer)
+        self.nlp = pipeline("ner", model=model, tokenizer=tokenizer, device=device)
     
     def get_entities(self, tokens):
         """
