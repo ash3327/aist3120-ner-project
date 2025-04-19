@@ -126,6 +126,39 @@ class Eval:
         return overall_precision, overall_recall, overall_f1
     
     @staticmethod
+    def entity_extraction_f1_score(pred_entities, tokens, dataset_labels):
+        """
+        Only check whether the correct entity terms are extracted without checking labels 
+        """
+         # Combine everything into a list of [idx, token, dataset_label_idx, spacy_label_idx]
+        pred_entities_set = set([entity for label, entity in pred_entities])
+        gold_entities = []
+        l = 0
+        for r in range(len(tokens)):
+            if dataset_labels[l] == 0:
+                l = r
+            elif dataset_labels[r] == 0:
+                entity = " ".join(tokens[l:r])
+                gold_entities.append(entity)
+                l = r
+        if l < len(tokens) and dataset_labels[l] > 0:
+            entity = " ".join(tokens[l:])
+            gold_entities.append(entity)
+
+        # Calculate true positives (entities that match exactly in type and span)
+        true_positives = sum(1 for entity in gold_entities if entity in pred_entities_set)
+        false_positives = len(pred_entities) - true_positives
+        false_negatives = len(gold_entities) - true_positives
+
+        # Calculate metrics
+        precision = true_positives / (true_positives + false_positives) if true_positives + false_positives > 0 else 0
+        recall = true_positives / (true_positives + false_negatives) if true_positives + false_negatives > 0 else 0
+        f1_score = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
+        
+        # Return TP, FP, FN along with metrics
+        return precision, recall, f1_score, true_positives, false_positives, false_negatives
+    
+    @staticmethod
     def evaluate(ner_compare:NER, test_samples):
         """
         ner_compare should provide the method get_entities.
@@ -135,6 +168,10 @@ class Eval:
         total_tp = 0
         total_fp = 0
         total_fn = 0
+
+        entity_extraction_total_tp = 0
+        entity_extraction_total_fp = 0
+        entity_extraction_total_fn = 0
         
         for idx, example in enumerate(tqdm(test_samples)):
             tokens = example["tokens"]
@@ -158,10 +195,29 @@ class Eval:
 
             # Calculate F1 score for this sample
             precision, recall, f1_score, tp, fp, fn = Eval.sample_f1_score(pred_entities, tokens, ner_tags)
+            entity_extraction_precision, entity_extraction_recall, entity_extraction_f1_score, entity_extraction_tp, entity_extraction_fp, entity_extraction_fn = Eval.entity_extraction_f1_score(pred_entities, tokens, ner_tags)
+
+
+
+            # if (precision < 0.5 or recall < 0.5) and len(pred_entities) > 0:
+            #     print()
+            #     print("-" * 50)
+            #     print(f"Sample {idx+1}:")
+            #     print(f"Text: {' '.join(tokens)}")
+            #     print(f"NER Tags: {ner_tags}")
+            #     print(f"Predicted Entities: {pred_entities}")
+            #     print(f"Precision: {precision:.4f}")
+            #     print(f"Recall: {recall:.4f}")
+            #     print(f"F1 Score: {f1_score:.4f}")
             # Accumulate counters
             total_tp += tp
             total_fp += fp
             total_fn += fn
+
+            entity_extraction_total_tp += entity_extraction_tp
+            entity_extraction_total_fp += entity_extraction_fp
+            entity_extraction_total_fn += entity_extraction_fn
+
             
             # print("-" * 50)
             # print(f"Sample Precision: {precision:.4f}")
@@ -172,6 +228,10 @@ class Eval:
         overall_precision, overall_recall, overall_f1 = Eval.overall_f1_score(
             total_tp, total_fp, total_fn
         )
+
+        entity_extraction_overall_precision, entity_extraction_overall_recall, entity_extraction_overall_f1 = Eval.overall_f1_score(
+            entity_extraction_total_tp, entity_extraction_total_fp, entity_extraction_total_fn
+        )
         
         print("\n" + "=" * 50)
         print(f"\nOVERALL EVALUATION (across {sample_size} samples):")
@@ -181,6 +241,14 @@ class Eval:
         print(f"Overall Precision: {overall_precision:.4f}")
         print(f"Overall Recall: {overall_recall:.4f}")
         print(f"Overall F1 Score: {overall_f1:.4f}")
+        print("\n" + "=" * 50)
+        print(f"\nEntity Extraction EVALUATION (across {sample_size} samples):")
+        print(f"True Positives: {entity_extraction_total_tp}")
+        print(f"False Positives: {entity_extraction_total_fp}")
+        print(f"False Negatives: {entity_extraction_total_fn}")
+        print(f"Overall Precision: {entity_extraction_overall_precision:.4f}")
+        print(f"Overall Recall: {entity_extraction_overall_recall:.4f}")
+        print(f"Overall F1 Score: {entity_extraction_overall_f1:.4f}")
 
     @staticmethod
     def evaluate_dataset(ner_compare:NER, dataset="conll", split="test"):
