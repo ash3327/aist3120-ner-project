@@ -251,9 +251,9 @@ class Eval:
             total_tp, total_fp, total_fn
         )
 
-        entity_extraction_overall_precision, entity_extraction_overall_recall, entity_extraction_overall_f1 = Eval.overall_f1_score(
-            entity_extraction_total_tp, entity_extraction_total_fp, entity_extraction_total_fn
-        )
+        # entity_extraction_overall_precision, entity_extraction_overall_recall, entity_extraction_overall_f1 = Eval.overall_f1_score(
+        #     entity_extraction_total_tp, entity_extraction_total_fp, entity_extraction_total_fn
+        # )
         
         print("\n" + "=" * 50)
         print(f"\nOVERALL EVALUATION (across {sample_size} samples):")
@@ -263,14 +263,14 @@ class Eval:
         print(f"Overall Precision: {overall_precision:.4f}")
         print(f"Overall Recall: {overall_recall:.4f}")
         print(f"Overall F1 Score: {overall_f1:.4f}")
-        print("\n" + "=" * 50)
-        print(f"\nEntity Extraction EVALUATION (across {sample_size} samples):")
-        print(f"True Positives: {entity_extraction_total_tp}")
-        print(f"False Positives: {entity_extraction_total_fp}")
-        print(f"False Negatives: {entity_extraction_total_fn}")
-        print(f"Overall Precision: {entity_extraction_overall_precision:.4f}")
-        print(f"Overall Recall: {entity_extraction_overall_recall:.4f}")
-        print(f"Overall F1 Score: {entity_extraction_overall_f1:.4f}")
+        # print("\n" + "=" * 50)
+        # print(f"\nEntity Extraction EVALUATION (across {sample_size} samples):")
+        # print(f"True Positives: {entity_extraction_total_tp}")
+        # print(f"False Positives: {entity_extraction_total_fp}")
+        # print(f"False Negatives: {entity_extraction_total_fn}")
+        # print(f"Overall Precision: {entity_extraction_overall_precision:.4f}")
+        # print(f"Overall Recall: {entity_extraction_overall_recall:.4f}")
+        # print(f"Overall F1 Score: {entity_extraction_overall_f1:.4f}")
 
         
         # Save records to file if output_file is provided

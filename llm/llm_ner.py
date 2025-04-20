@@ -6,6 +6,7 @@ import re
 import os
 import yaml
 import time
+import argparse
 
 import openai
 
@@ -197,11 +198,10 @@ class llmNER(NER):
             return []
 
 
-def main(dataset="conll", split="test"):
+def main(dataset="conll", split="test", model_name="gemma-3-27b-it"):
     # Load configuration from config.yaml
     api_key = None
     base_url = None
-    model_name = "gemma-3-27b-it"
     rate_limit = 0.4
 
     # Create NER comparison object with rate limiting
@@ -212,7 +212,15 @@ def main(dataset="conll", split="test"):
     print(f"Failed API calls: {ner_compare.fail_count}")
 
 if __name__ == "__main__":
-    main(dataset="conll", split="test")
+    parser = argparse.ArgumentParser(description='Named Entity Recognition using LLMs')
+    parser.add_argument('--dataset', type=str, default='conll', help='Dataset to evaluate (default: conll)')
+    parser.add_argument('--split', type=str, default='test', help='Data split to use (default: test)')
+    parser.add_argument('--model', type=str, default='google/gemma-3-27b-it', 
+                        help='LLM model to use (default: google/gemma-3-27b-it)')
+    
+    args = parser.parse_args()
+    
+    main(dataset=args.dataset, split=args.split, model_name=args.model)
 
 
 
