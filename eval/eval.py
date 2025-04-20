@@ -4,6 +4,9 @@ sys.path.append('.')
 from datasets import load_dataset
 import random
 from tqdm import tqdm
+import os
+import json
+import datetime
 
 from spacy_ner import SpacyNER
 from libs import NER
@@ -159,7 +162,7 @@ class Eval:
         return precision, recall, f1_score, true_positives, false_positives, false_negatives
     
     @staticmethod
-    def evaluate(ner_compare:NER, test_samples):
+    def evaluate(ner_compare:NER, test_samples, output_file=None):
         """
         ner_compare should provide the method get_entities.
         """        
@@ -172,6 +175,9 @@ class Eval:
         entity_extraction_total_tp = 0
         entity_extraction_total_fp = 0
         entity_extraction_total_fn = 0
+        
+        # Create records structure for logging results
+        records = []
         
         for idx, example in enumerate(tqdm(test_samples)):
             tokens = example["tokens"]
@@ -219,6 +225,22 @@ class Eval:
             entity_extraction_total_fn += entity_extraction_fn
 
             
+            # Save data for this sample to records
+            record = {
+                "tokens": tokens,
+                "ner_tags": ner_tags,
+                "predicted_entities": pred_entities,
+                "metrics": {
+                    "precision": precision,
+                    "recall": recall,
+                    "f1_score": f1_score,
+                    "tp": tp,
+                    "fp": fp, 
+                    "fn": fn
+                }
+            }
+            records.append(record)
+            
             # print("-" * 50)
             # print(f"Sample Precision: {precision:.4f}")
             # print(f"Sample Recall: {recall:.4f}")
@@ -250,8 +272,34 @@ class Eval:
         print(f"Overall Recall: {entity_extraction_overall_recall:.4f}")
         print(f"Overall F1 Score: {entity_extraction_overall_f1:.4f}")
 
+        
+        # Save records to file if output_file is provided
+        if output_file:
+            # Ensure records directory exists
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            
+            # Create a record summary with metadata and results
+            record_data = {
+                "timestamp": datetime.datetime.now().isoformat(),
+                "model": ner_compare.__class__.__name__, 
+                "sample_size": sample_size,
+                "overall_metrics": {
+                    "precision": overall_precision,
+                    "recall": overall_recall,
+                    "f1_score": overall_f1,
+                    "tp": total_tp,
+                    "fp": total_fp,
+                    "fn": total_fn
+                },
+                "samples": records
+            }
+            
+            # Write to JSON file
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(record_data, f, ensure_ascii=False, indent=2)
+    
     @staticmethod
-    def evaluate_dataset(ner_compare:NER, dataset="conll", split="test"):
+    def evaluate_dataset(ner_compare:NER, dataset="conll", split="test", output_file=None):
         print("\n"+("="*50))
         print(f"Evaluating {dataset} dataset ({split})...")
         print("="*50)
@@ -270,7 +318,45 @@ class Eval:
             # Process examples from the test set
             test_samples = dataset[split] #.select(random.sample(range(len(dataset["test"])), sample_size))
         
-        Eval.evaluate(ner_compare, test_samples)
+        Eval.evaluate(ner_compare, test_samples, output_file)
+    
+    @staticmethod
+    def evaluate_record(record_file):
+        """
+        Evaluate NER performance by reading saved records from a file.
+        
+        Args:
+            record_file (str): Path to the record file
+            
+        Returns:
+            tuple: (overall_precision, overall_recall, overall_f1)
+        """
+        print("\n"+("="*50))
+        print(f"Evaluating from record file: {record_file}")
+        print("="*50)
+        
+        # Read the saved record file
+        try:
+            with open(record_file, 'r', encoding='utf-8') as f:
+                record_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Error reading record file: {e}")
+            return None
+        
+        overall_metrics = record_data["overall_metrics"]
+        print(f"\nLoaded pre-calculated metrics from record:")
+        print(f"True Positives: {overall_metrics.get('tp', 0)}")
+        print(f"False Positives: {overall_metrics.get('fp', 0)}")
+        print(f"False Negatives: {overall_metrics.get('fn', 0)}")
+        print(f"Overall Precision: {overall_metrics.get('precision', 0):.4f}")
+        print(f"Overall Recall: {overall_metrics.get('recall', 0):.4f}")
+        print(f"Overall F1 Score: {overall_metrics.get('f1_score', 0):.4f}")
+        
+        return (
+            overall_metrics.get('precision', 0),
+            overall_metrics.get('recall', 0),
+            overall_metrics.get('f1_score', 0)
+        )
 
 def main(dataset="conll", split="test"):
     # Create NER comparison object
