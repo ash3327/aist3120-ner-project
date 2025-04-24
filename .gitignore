@@ -12,6 +12,8 @@
 *.pth
 *.pt
 checkpoint-*/
+._*
+
 
 # =========================
 # Spacy
@@ -193,3 +195,5 @@ cython_debug/
 
 # Ignore configuration file with sensitive API keys
 config.yaml
+
+.DS_Store

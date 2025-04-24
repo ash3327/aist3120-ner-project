@@ -2,14 +2,17 @@
 
 ## Job Allocation
 
-* Sam: Masked BERT.
-* Square: SpaCy, Gemma 3 27B.
+* Sam: BERT experiments
+* Square: SpaCy and Gemma 3 experiments
+* Quinson: Literature review and result analysis
 
 ## Installation
 
 * **Prerequisites**
     ```
     # *Open a new virtual environment before execution.
+    
+    # Install packages:
     pip install -r requirements.txt
     ```
 * **Dataset: CoNLL-2003** | [Source](https://huggingface.co/datasets/eriktks) | [Data Description](https://huggingface.co/datasets/eriktks/conll2003#dataset-structure) | [Examples (for each NER class)](https://www.clips.uantwerpen.be/conll2003/ner/lists/)
@@ -63,10 +66,8 @@ Run the following commands for all runs on custom aggregation strategy (explaine
 python masked_bert/masked_bert_ner.py --model_name dslim/bert-base-NER
 
 # Trained models
-
+# For model files specifically for our runs please send an email to us
 python masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v1 
-python masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v4
-python masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v5
 ```
 
 Run the following commands for default aggregation strategies (yes, the file is fine_tuned_ner.py because we tested on fine-tuning models first before changing it to base models):
@@ -81,17 +82,6 @@ python masked_bert/fine_tuned_ner.py --model_name dslim/bert-base-NER --aggregat
 # Test with different datasets
 python masked_bert/fine_tuned_ner.py --model_name dslim/bert-base-NER --dataset wikiann --aggregation_strategy max
 ```
-
-## Models
-* **Baseline: Pre-trained model for NER** | [Source](https://huggingface.co/dslim/bert-large-NER)
-  * This is fine-tuned on the CoNLL-2003 dataset.
-* **Benchmark 1:** Spacy.
-  * **Prerequisites:** `python -m spacy download <model_name>`, eg `en_core_web_md`.
-* `train_masked_bert.py`
-  * v4: Fine-tune with the masked dataset for 3 epochs based on dslim/bert-base-NER.
-  * v5: Fine-tune with the masked dataset for 9 epochs (same model as v4), with 1/3 the learning rate and lr decay. This is because 3 epochs may not allow the model to learn effectively from the masked dataset (due to random nature of the dataset).
-  * nomask_v1 ([Reference](https://github.com/Louis-udm/NER-BERT-CRF)): 15 epochs, trained with raw dataset without masking,fine-tuned upon distilbert-base-cased.
-
 
 ### Other References
 
@@ -154,7 +144,7 @@ Metric: Precision/Recall/F1 Score
 
 | Model                         | Precision | Recall  | F1      |
 | ----------------------------- | --------- | ------- | ------- |
-| Bert-Base-NER [16]            | **0.9124**    | **0.9189**  | **0.9157**  |
+| Bert-Base-NER             | **0.9124**    | **0.9189**  | **0.9157**  |
 | Distillbert-cased fine-tuned (no mask) | 0.8927    | 0.9032  | 0.8979  |
 | SpaCy Medium                  | 0.6618    | 0.5758  | 0.6158  |
 | SpaCy Large                   | 0.6850    | 0.6317  | 0.6573  |
