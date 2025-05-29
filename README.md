@@ -1,4 +1,22 @@
-# aist3120-ner-project: Named Entity Recognition
+# AIST3120: Named Entity Recognition
+
+[![Final Report](https://img.shields.io/badge/Final%20Report-blue?style=for-the-badge)](AIST3120_Final_Project_Report.pdf) 
+[![Project Description](https://img.shields.io/badge/Project%20Description-green?style=for-the-badge)](project_description.pdf) 
+
+## Overview
+This project aims to explore methodologies related to Named Entity Recognition.
+
+### Methodology
+
+The project evaluated three distinct deep learning architectures for Named Entity Recognition (NER):
+
+* **SpaCy:** (Responsible: Square) Explored the key approaches used in the SpaCy library, including hash embeddings and trasition-based models.
+* **BERT (Bidirectional Encoder Representations from Transformers):** (Responsible: Sam/Ash) Fine-tuned the `bert-base-cased` model over NER task, with following modifications:
+    * **Aggregation Strategies:** Improved aggregation method to make sure that each input word is not split into parts in the output.
+    * **Masking:** Masked by chance 15% of named entities in the training data and adjusted the leraning rate and number of epochs for the fine-tuning process to test if encouraging the utilization of nearby context could improve the generalizability over unseen named-entities.
+* **Gemma 3 (Decoder LLM):** (Responsible: Square) Tested the performance by using decoder LLMs on NER tasks, guided using prompt engineering. Ensured JSON output. Evaluated on both zero-shot (only instructions) and few-shot (instructions plus examples) cases.
+
+For more experimental data, please see the [report](/AIST3120_Final_Project_Report.pdf) for more information.
 
 ## Job Allocation
 
