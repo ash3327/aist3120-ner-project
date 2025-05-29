@@ -1,0 +1,79 @@
+(venv) D:\kht3327\_Projects\aist3120-ner-project>python masked_bert/masked_bert_ner.py --model_name runs/bert_ft_v4    
+Device set to use cuda:0
+
+==================================================
+Evaluating conll dataset (test)...
+==================================================
+Loading conll2003 dataset...
+Found 8220 unique entities in training set
+Found 5648 total entities in test set
+Of which 2685 are unseen (not in training set)
+Unseen entity ratio: 47.54%
+  0%|▎                                                                                                                 | 10/3453 [00:00<01:33, 36.63it/s]You seem to be using the pipelines sequentially on GPU. In order to maximize efficiency please use a dataset
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3453/3453 [00:35<00:00, 98.30it/s]
+
+==================================================
+
+OVERALL EVALUATION (across 3453 samples):
+
+ALL ENTITIES:
+True Positives: 5180
+False Positives: 525
+False Negatives: 468
+Precision: 0.9080
+Recall: 0.9171
+F1 Score: 0.9125
+
+SEEN ENTITIES:
+True Positives: 2838
+False Positives: 99
+False Negatives: 125
+Precision: 0.9663
+Recall: 0.9578
+F1 Score: 0.9620
+
+UNSEEN ENTITIES:
+True Positives: 2342
+False Positives: 426
+False Negatives: 343
+Precision: 0.8461
+Recall: 0.8723
+F1 Score: 0.8590
+
+==================================================
+Evaluating wikiann dataset (test)...
+==================================================
+Loading wikiann dataset...
+Found 8220 unique entities in training set
+Found 13958 total entities in test set
+Of which 12764 are unseen (not in training set)
+Unseen entity ratio: 91.45%
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [01:48<00:00, 92.20it/s] 
+
+==================================================
+
+OVERALL EVALUATION (across 10000 samples):
+
+ALL ENTITIES:
+True Positives: 7279
+False Positives: 8604
+False Negatives: 6679
+Precision: 0.4583
+Recall: 0.5215
+F1 Score: 0.4879
+
+SEEN ENTITIES:
+True Positives: 1149
+False Positives: 1273
+False Negatives: 45
+Precision: 0.4744
+Recall: 0.9623
+F1 Score: 0.6355
+
+UNSEEN ENTITIES:
+True Positives: 6130
+False Positives: 7331
+False Negatives: 6634
+Precision: 0.4554
+Recall: 0.4803
+F1 Score: 0.4675

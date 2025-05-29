@@ -1,0 +1,76 @@
+==================================================
+Evaluating conll dataset (test)...
+==================================================
+Loading conll2003 dataset...
+Found 8220 unique entities in training set
+Found 5648 total entities in test set
+Of which 2685 are unseen (not in training set)
+Unseen entity ratio: 47.54%
+  0%|                                                                                                                   | 1/3453 [00:00<20:52,  2.76it/s]You seem to be using the pipelines sequentially on GPU. In order to maximize efficiency please use a dataset
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3453/3453 [00:21<00:00, 163.19it/s]
+
+==================================================
+
+OVERALL EVALUATION (across 3453 samples):
+
+ALL ENTITIES:
+True Positives: 5054
+False Positives: 606
+False Negatives: 594
+Precision: 0.8929
+Recall: 0.8948
+F1 Score: 0.8939
+
+SEEN ENTITIES:
+True Positives: 2755
+False Positives: 72
+False Negatives: 208
+Precision: 0.9745
+Recall: 0.9298
+F1 Score: 0.9516
+
+UNSEEN ENTITIES:
+True Positives: 2299
+False Positives: 534
+False Negatives: 386
+Precision: 0.8115
+Recall: 0.8562
+F1 Score: 0.8333
+
+==================================================
+Evaluating wikiann dataset (test)...
+==================================================
+Loading wikiann dataset...
+Found 8220 unique entities in training set
+Found 13958 total entities in test set
+Of which 12764 are unseen (not in training set)
+Unseen entity ratio: 91.45%
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:57<00:00, 173.93it/s] 
+
+==================================================
+
+OVERALL EVALUATION (across 10000 samples):
+
+ALL ENTITIES:
+True Positives: 7091
+False Positives: 8401
+False Negatives: 6867
+Precision: 0.4577
+Recall: 0.5080
+F1 Score: 0.4816
+
+SEEN ENTITIES:
+True Positives: 1134
+False Positives: 1231
+False Negatives: 60
+Precision: 0.4795
+Recall: 0.9497
+F1 Score: 0.6373
+
+UNSEEN ENTITIES:
+True Positives: 5957
+False Positives: 7170
+False Negatives: 6807
+Precision: 0.4538
+Recall: 0.4667
+F1 Score: 0.4602

@@ -7,8 +7,8 @@ from tqdm import tqdm
 import os
 import json
 import datetime
+from collections import defaultdict
 
-from spacy_ner import SpacyNER
 from libs import NER
 
 class Eval:
@@ -29,37 +29,87 @@ class Eval:
     label_to_idx = {v: k for k, v in idx_to_label.items()}
     
     @staticmethod
-    def sample_f1_score(pred_entities, tokens, dataset_labels):
+    def get_seen_entities(dataset, split="train", reference_set=None):
+        """
+        Extract entities from a dataset split and optionally check against a reference set.
+        
+        Args:
+            dataset: The dataset object
+            split: The split to use (default: "train")
+            reference_set: Optional set of (entity_type, entity_text) tuples to check against
+            
+        Returns:
+            If reference_set is None:
+                set: Set of (entity_type, entity_text) tuples that appear in the split
+            If reference_set is provided:
+                tuple: (total_entities, unseen_entities) where:
+                    total_entities: int, total number of entity occurrences
+                    unseen_entities: int, number of entities not in reference_set
+        """
+        entities = set()
+        total_count = 0
+        unseen_count = 0
+        
+        for example in dataset[split]:
+            tokens = example["tokens"]
+            ner_tags = example["ner_tags"]
+            
+            # Extract entities using the same logic as in sample_f1_score
+            i = 0
+            while i < len(tokens):
+                if ner_tags[i] != 0:  # not 'O' class
+                    gold_label = Eval.idx_to_label[ner_tags[i]]
+                    if gold_label.startswith('B-'):
+                        entity_type = gold_label[2:]
+                        start_idx = i
+                        entity_tokens = [tokens[i]]
+                        
+                        j = i + 1
+                        while j < len(tokens):
+                            if ner_tags[j] != 0:
+                                next_gold_label = Eval.idx_to_label[ner_tags[j]]
+                                if next_gold_label == f"I-{entity_type}":
+                                    entity_tokens.append(tokens[j])
+                                    j += 1
+                                    continue
+                            break
+                        
+                        entity_text = ' '.join(entity_tokens)
+                        entity = (entity_type, entity_text)
+                        
+                        if reference_set is None:
+                            entities.add(entity)
+                        else:
+                            total_count += 1
+                            if entity not in reference_set:
+                                unseen_count += 1
+                i += 1
+        
+        if reference_set is None:
+            return entities
+        else:
+            return total_count, unseen_count
+
+    @staticmethod
+    def sample_f1_score(pred_entities, tokens, dataset_labels, seen_entities=None):
         """
         Calculate precision, recall, and F1 score for named entity recognition.
+        If seen_entities is provided, also calculate separate metrics for seen and unseen entities.
         
         Args:
             pred_entities (list): List of [label, text (entity)]
             tokens (list): List of tokens/words
-            
-        Returns:
-            tuple: (precision, recall, f1_score, true_positives, false_positives, false_negatives)
-        """
-        """
-        Compare NER labels between dataset and spaCy.
-        
-        Args:
-            tokens (list): List of tokens/words
             dataset_labels (list): List of dataset label indices
+            seen_entities (set): Set of (entity_type, entity_text) tuples that appear in training
             
         Returns:
-            list: List of [token_idx, token, dataset_label_idx, spacy_label_idx]
+            tuple: (metrics_dict) containing precision, recall, f1_score, and counts for all/seen/unseen entities
         """
-        # Combine everything into a list of [idx, token, dataset_label_idx, spacy_label_idx]
-        result = []
-        for i, (token, dataset_label_idx) in enumerate(zip(tokens, dataset_labels)):
-            result.append([i, token, dataset_label_idx])
-
         # Extract entities from gold standard and predictions
         gold_entities = []
         i = 0
-        while i < len(result):
-            token_idx, token, gold_label_idx = result[i]
+        while i < len(tokens):
+            token_idx, token, gold_label_idx = i, tokens[i], dataset_labels[i]
             
             # Process gold entities
             if gold_label_idx != 0: # not 'O' class
@@ -70,8 +120,8 @@ class Eval:
                     entity_tokens = [token]
                     
                     j = i + 1
-                    while j < len(result):
-                        next_token_idx, next_token, next_gold_label_idx = result[j]
+                    while j < len(tokens):
+                        next_token_idx, next_token, next_gold_label_idx = j, tokens[j], dataset_labels[j]
                         if next_gold_label_idx != 0:
                             next_gold_label = Eval.idx_to_label[next_gold_label_idx]
                             if next_gold_label == f"I-{entity_type}":
@@ -81,100 +131,93 @@ class Eval:
                         break
                     
                     end_idx = start_idx + len(entity_tokens)
-                    gold_entities.append((entity_type, ' '.join(tokens[start_idx:end_idx])))
+                    entity_text = ' '.join(tokens[start_idx:end_idx])
+                    gold_entities.append((entity_type, entity_text))
             
             i += 1
 
-        # print("Gold entities:", gold_entities)
-        # print("Predicted entities:", pred_entities)
-        
-        # Calculate true positives (entities that match exactly in type and span)
+        # Calculate metrics for all entities
         true_positives = sum(1 for entity in gold_entities if entity in pred_entities)
         false_positives = len(pred_entities) - true_positives
         false_negatives = len(gold_entities) - true_positives
 
-        # fp, fn = [entity for entity in pred_entities if entity not in gold_entities], [entity for entity in gold_entities if entity not in pred_entities]
-        # if fp or fn:
-        #     print()
-        #     print(tokens)
-        #     print("False Positives", fp)
-        #     print("False Negatives", fn)
-        #     print("Predicted entities:", pred_entities)
-        
-        # Calculate metrics
         precision = true_positives / (true_positives + false_positives) if true_positives + false_positives > 0 else 0
         recall = true_positives / (true_positives + false_negatives) if true_positives + false_negatives > 0 else 0
         f1_score = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
-        
-        # Return TP, FP, FN along with metrics
-        return precision, recall, f1_score, true_positives, false_positives, false_negatives
-    
-    @staticmethod
-    def overall_f1_score(total_tp, total_fp, total_fn):
-        """
-        Calculate overall precision, recall, and F1 score based on cumulative counts.
-        
-        Args:
-            total_tp (int): Total true positives across all samples
-            total_fp (int): Total false positives across all samples
-            total_fn (int): Total false negatives across all samples
+
+        metrics = {
+            "all": {
+                "precision": precision,
+                "recall": recall,
+                "f1_score": f1_score,
+                "tp": true_positives,
+                "fp": false_positives,
+                "fn": false_negatives
+            }
+        }
+
+        # If seen_entities is provided, calculate separate metrics for seen and unseen entities
+        if seen_entities is not None:
+            # Split gold entities into seen and unseen
+            seen_gold = [e for e in gold_entities if e in seen_entities]
+            unseen_gold = [e for e in gold_entities if e not in seen_entities]
             
-        Returns:
-            tuple: (overall_precision, overall_recall, overall_f1_score)
-        """
-        overall_precision = total_tp / (total_tp + total_fp) if total_tp + total_fp > 0 else 0
-        overall_recall = total_tp / (total_tp + total_fn) if total_tp + total_fn > 0 else 0
-        overall_f1 = 2 * overall_precision * overall_recall / (overall_precision + overall_recall) if overall_precision + overall_recall > 0 else 0
+            # Split predicted entities into seen and unseen
+            seen_pred = [e for e in pred_entities if e in seen_entities]
+            unseen_pred = [e for e in pred_entities if e not in seen_entities]
+            
+            # Calculate metrics for seen entities
+            seen_tp = sum(1 for entity in seen_gold if entity in seen_pred)
+            seen_fp = len(seen_pred) - seen_tp
+            seen_fn = len(seen_gold) - seen_tp
+            
+            seen_precision = seen_tp / (seen_tp + seen_fp) if seen_tp + seen_fp > 0 else 0
+            seen_recall = seen_tp / (seen_tp + seen_fn) if seen_tp + seen_fn > 0 else 0
+            seen_f1 = 2 * seen_precision * seen_recall / (seen_precision + seen_recall) if seen_precision + seen_recall > 0 else 0
+            
+            # Calculate metrics for unseen entities
+            unseen_tp = sum(1 for entity in unseen_gold if entity in unseen_pred)
+            unseen_fp = len(unseen_pred) - unseen_tp
+            unseen_fn = len(unseen_gold) - unseen_tp
+            
+            unseen_precision = unseen_tp / (unseen_tp + unseen_fp) if unseen_tp + unseen_fp > 0 else 0
+            unseen_recall = unseen_tp / (unseen_tp + unseen_fn) if unseen_tp + unseen_fn > 0 else 0
+            unseen_f1 = 2 * unseen_precision * unseen_recall / (unseen_precision + unseen_recall) if unseen_precision + unseen_recall > 0 else 0
+            
+            metrics.update({
+                "seen": {
+                    "precision": seen_precision,
+                    "recall": seen_recall,
+                    "f1_score": seen_f1,
+                    "tp": seen_tp,
+                    "fp": seen_fp,
+                    "fn": seen_fn
+                },
+                "unseen": {
+                    "precision": unseen_precision,
+                    "recall": unseen_recall,
+                    "f1_score": unseen_f1,
+                    "tp": unseen_tp,
+                    "fp": unseen_fp,
+                    "fn": unseen_fn
+                }
+            })
         
-        return overall_precision, overall_recall, overall_f1
-    
-    @staticmethod
-    def entity_extraction_f1_score(pred_entities, tokens, dataset_labels):
-        """
-        Only check whether the correct entity terms are extracted without checking labels 
-        """
-         # Combine everything into a list of [idx, token, dataset_label_idx, spacy_label_idx]
-        pred_entities_set = set([entity for label, entity in pred_entities])
-        gold_entities = []
-        l = 0
-        for r in range(len(tokens)):
-            if dataset_labels[l] == 0:
-                l = r
-            elif dataset_labels[r] == 0:
-                entity = " ".join(tokens[l:r])
-                gold_entities.append(entity)
-                l = r
-        if l < len(tokens) and dataset_labels[l] > 0:
-            entity = " ".join(tokens[l:])
-            gold_entities.append(entity)
+        return metrics
 
-        # Calculate true positives (entities that match exactly in type and span)
-        true_positives = sum(1 for entity in gold_entities if entity in pred_entities_set)
-        false_positives = len(pred_entities) - true_positives
-        false_negatives = len(gold_entities) - true_positives
-
-        # Calculate metrics
-        precision = true_positives / (true_positives + false_positives) if true_positives + false_positives > 0 else 0
-        recall = true_positives / (true_positives + false_negatives) if true_positives + false_negatives > 0 else 0
-        f1_score = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
-        
-        # Return TP, FP, FN along with metrics
-        return precision, recall, f1_score, true_positives, false_positives, false_negatives
-    
     @staticmethod
-    def evaluate(ner_compare:NER, test_samples, output_file=None):
+    def evaluate(ner_compare:NER, test_samples, output_file=None, seen_entities=None):
         """
         ner_compare should provide the method get_entities.
         """        
         sample_size = len(test_samples)
+        
         # Initialize counters for overall metrics
-        total_tp = 0
-        total_fp = 0
-        total_fn = 0
-
-        entity_extraction_total_tp = 0
-        entity_extraction_total_fp = 0
-        entity_extraction_total_fn = 0
+        total_metrics = {
+            "all": {"tp": 0, "fp": 0, "fn": 0},
+            "seen": {"tp": 0, "fp": 0, "fn": 0},
+            "unseen": {"tp": 0, "fp": 0, "fn": 0}
+        }
         
         # Create records structure for logging results
         records = []
@@ -183,95 +226,59 @@ class Eval:
             tokens = example["tokens"]
             ner_tags = example["ner_tags"]
             
-            # print("\n" + "=" * 50)
-            # print(f"\nExample {idx+1}:")
-            # print(f"Text: {' '.join(tokens)}")
-            
-            # Get entity comparisons
+            # Get entity predictions
             pred_entities = ner_compare.get_entities(tokens)
             
-            # Print comparison table with 4 columns as requested
-            # print("\nLocation    Word        Label       Prediction")
-            # print("-" * 50)
-            # for loc, word, label_idx, pred_idx in entity_comparisons:
-            #     # Convert indices to text labels only for printing
-            #     label_text = Eval.idx_to_label.get(label_idx, "Unknown")
-            #     pred_text = Eval.idx_to_label.get(pred_idx, "Unknown")
-            #     # print(f"{loc:<12}{word:<12}{label_text:<12}{pred_text}")
-
-            # Calculate F1 score for this sample
-            precision, recall, f1_score, tp, fp, fn = Eval.sample_f1_score(pred_entities, tokens, ner_tags)
-            entity_extraction_precision, entity_extraction_recall, entity_extraction_f1_score, entity_extraction_tp, entity_extraction_fp, entity_extraction_fn = Eval.entity_extraction_f1_score(pred_entities, tokens, ner_tags)
-
-
-
-            # if (precision < 0.5 or recall < 0.5) and len(pred_entities) > 0:
-            #     print()
-            #     print("-" * 50)
-            #     print(f"Sample {idx+1}:")
-            #     print(f"Text: {' '.join(tokens)}")
-            #     print(f"NER Tags: {ner_tags}")
-            #     print(f"Predicted Entities: {pred_entities}")
-            #     print(f"Precision: {precision:.4f}")
-            #     print(f"Recall: {recall:.4f}")
-            #     print(f"F1 Score: {f1_score:.4f}")
+            # Calculate metrics for this sample
+            sample_metrics = Eval.sample_f1_score(pred_entities, tokens, ner_tags, seen_entities)
+            
             # Accumulate counters
-            total_tp += tp
-            total_fp += fp
-            total_fn += fn
-
-            entity_extraction_total_tp += entity_extraction_tp
-            entity_extraction_total_fp += entity_extraction_fp
-            entity_extraction_total_fn += entity_extraction_fn
-
+            for category in total_metrics:
+                for metric in ["tp", "fp", "fn"]:
+                    total_metrics[category][metric] += sample_metrics[category][metric]
             
             # Save data for this sample to records
             record = {
                 "tokens": tokens,
                 "ner_tags": ner_tags,
                 "predicted_entities": pred_entities,
-                "metrics": {
-                    "precision": precision,
-                    "recall": recall,
-                    "f1_score": f1_score,
-                    "tp": tp,
-                    "fp": fp, 
-                    "fn": fn
-                }
+                "metrics": sample_metrics
             }
             records.append(record)
+        
+        # Calculate overall metrics
+        overall_metrics = {}
+        for category in total_metrics:
+            tp = total_metrics[category]["tp"]
+            fp = total_metrics[category]["fp"]
+            fn = total_metrics[category]["fn"]
             
-            # print("-" * 50)
-            # print(f"Sample Precision: {precision:.4f}")
-            # print(f"Sample Recall: {recall:.4f}")
-            # print(f"Sample F1 Score: {f1_score:.4f}")
+            precision = tp / (tp + fp) if tp + fp > 0 else 0
+            recall = tp / (tp + fn) if tp + fn > 0 else 0
+            f1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
+            
+            overall_metrics[category] = {
+                "precision": precision,
+                "recall": recall,
+                "f1_score": f1,
+                "tp": tp,
+                "fp": fp,
+                "fn": fn
+            }
         
-        # Calculate overall metrics using the new method
-        overall_precision, overall_recall, overall_f1 = Eval.overall_f1_score(
-            total_tp, total_fp, total_fn
-        )
-
-        # entity_extraction_overall_precision, entity_extraction_overall_recall, entity_extraction_overall_f1 = Eval.overall_f1_score(
-        #     entity_extraction_total_tp, entity_extraction_total_fp, entity_extraction_total_fn
-        # )
-        
+        # Print results
         print("\n" + "=" * 50)
         print(f"\nOVERALL EVALUATION (across {sample_size} samples):")
-        print(f"True Positives: {total_tp}")
-        print(f"False Positives: {total_fp}")
-        print(f"False Negatives: {total_fn}")
-        print(f"Overall Precision: {overall_precision:.4f}")
-        print(f"Overall Recall: {overall_recall:.4f}")
-        print(f"Overall F1 Score: {overall_f1:.4f}")
-        # print("\n" + "=" * 50)
-        # print(f"\nEntity Extraction EVALUATION (across {sample_size} samples):")
-        # print(f"True Positives: {entity_extraction_total_tp}")
-        # print(f"False Positives: {entity_extraction_total_fp}")
-        # print(f"False Negatives: {entity_extraction_total_fn}")
-        # print(f"Overall Precision: {entity_extraction_overall_precision:.4f}")
-        # print(f"Overall Recall: {entity_extraction_overall_recall:.4f}")
-        # print(f"Overall F1 Score: {entity_extraction_overall_f1:.4f}")
-
+        
+        for category in ["all", "seen", "unseen"]:
+            metrics = overall_metrics[category]
+            print(f"\n{category.upper()} ENTITIES:")
+            print(f"True Positives: {metrics['tp']}")
+            print(f"False Positives: {metrics['fp']}")
+            print(f"False Negatives: {metrics['fn']}")
+            print(f"Precision: {metrics['precision']:.4f}")
+            print(f"Recall: {metrics['recall']:.4f}")
+            print(f"F1 Score: {metrics['f1_score']:.4f}")
         
         # Save records to file if output_file is provided
         if output_file:
@@ -283,14 +290,7 @@ class Eval:
                 "timestamp": datetime.datetime.now().isoformat(),
                 "model": ner_compare.__class__.__name__, 
                 "sample_size": sample_size,
-                "overall_metrics": {
-                    "precision": overall_precision,
-                    "recall": overall_recall,
-                    "f1_score": overall_f1,
-                    "tp": total_tp,
-                    "fp": total_fp,
-                    "fn": total_fn
-                },
+                "overall_metrics": overall_metrics,
                 "samples": records
             }
             
@@ -303,22 +303,30 @@ class Eval:
         print("\n"+("="*50))
         print(f"Evaluating {dataset} dataset ({split})...")
         print("="*50)
-        if dataset == "conll":
-            # Load the conll2003 dataset
-            print(f"Loading conll2003 dataset ({split})...")
-            dataset = load_dataset("eriktks/conll2003")
-
-            # Process examples from the test set
-            test_samples = dataset[split] #.select(random.sample(range(len(dataset["test"])), sample_size))
-        elif dataset == "wikiann":
-            # Load the wikiann dataset
-            print(f"Loading wikiann dataset ({split})...")
-            dataset = load_dataset("unimelb-nlp/wikiann", "en", trust_remote_code=True)
-
-            # Process examples from the test set
-            test_samples = dataset[split] #.select(random.sample(range(len(dataset["test"])), sample_size))
         
-        Eval.evaluate(ner_compare, test_samples, output_file)
+        # Load the dataset
+        train_dataset = load_dataset("eriktks/conll2003")
+        if dataset == "conll":
+            print(f"Loading conll2003 dataset...")
+            dataset = load_dataset("eriktks/conll2003")
+        elif dataset == "wikiann":
+            print(f"Loading wikiann dataset...")
+            dataset = load_dataset("unimelb-nlp/wikiann", "en", trust_remote_code=True)
+        
+        # Get seen entities from training set
+        seen_entities = Eval.get_seen_entities(train_dataset)
+        print(f"Found {len(seen_entities)} unique entities in training set")
+        
+        # Count entities in test set and check against training set
+        total_test_entities, unseen_test_entities = Eval.get_seen_entities(dataset, split, seen_entities)
+        print(f"Found {total_test_entities} total entities in test set")
+        print(f"Of which {unseen_test_entities} are unseen (not in training set)")
+        print(f"Unseen entity ratio: {unseen_test_entities/total_test_entities:.2%}")
+        
+        # Process examples from the test set
+        test_samples = dataset[split]
+        
+        Eval.evaluate(ner_compare, test_samples, output_file, seen_entities)
     
     @staticmethod
     def evaluate_record(record_file):
@@ -329,7 +337,7 @@ class Eval:
             record_file (str): Path to the record file
             
         Returns:
-            tuple: (overall_precision, overall_recall, overall_f1)
+            dict: Dictionary containing overall metrics for all/seen/unseen entities
         """
         print("\n"+("="*50))
         print(f"Evaluating from record file: {record_file}")
@@ -344,22 +352,22 @@ class Eval:
             return None
         
         overall_metrics = record_data["overall_metrics"]
-        print(f"\nLoaded pre-calculated metrics from record:")
-        print(f"True Positives: {overall_metrics.get('tp', 0)}")
-        print(f"False Positives: {overall_metrics.get('fp', 0)}")
-        print(f"False Negatives: {overall_metrics.get('fn', 0)}")
-        print(f"Overall Precision: {overall_metrics.get('precision', 0):.4f}")
-        print(f"Overall Recall: {overall_metrics.get('recall', 0):.4f}")
-        print(f"Overall F1 Score: {overall_metrics.get('f1_score', 0):.4f}")
         
-        return (
-            overall_metrics.get('precision', 0),
-            overall_metrics.get('recall', 0),
-            overall_metrics.get('f1_score', 0)
-        )
+        for category in ["all", "seen", "unseen"]:
+            metrics = overall_metrics[category]
+            print(f"\n{category.upper()} ENTITIES:")
+            print(f"True Positives: {metrics['tp']}")
+            print(f"False Positives: {metrics['fp']}")
+            print(f"False Negatives: {metrics['fn']}")
+            print(f"Precision: {metrics['precision']:.4f}")
+            print(f"Recall: {metrics['recall']:.4f}")
+            print(f"F1 Score: {metrics['f1_score']:.4f}")
+        
+        return overall_metrics
 
 def main(dataset="conll", split="test"):
     # Create NER comparison object
+    from spacy_ner import SpacyNER
     ignore_types = ['DATE', 'TIME', 'CARDINAL', 'ORDINAL', 'MONEY', 'PERCENT', 'QUANTITY', 'PRODUCT', 'WORK_OF_ART']
     ner_compare = SpacyNER(ignore_types=ignore_types)
 

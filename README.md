@@ -32,6 +32,9 @@ For more experimental data, please see the [report](/AIST3120_Final_Project_Repo
     
     # Install packages:
     pip install -r requirements.txt
+
+    # If only want to use BERT (quick installation):
+    pip install -r requirements-min.txt
     ```
 * **Dataset: CoNLL-2003** | [Source](https://huggingface.co/datasets/eriktks) | [Data Description](https://huggingface.co/datasets/eriktks/conll2003#dataset-structure) | [Examples (for each NER class)](https://www.clips.uantwerpen.be/conll2003/ner/lists/)
 * **Dataset: WikiAnn** | [Source](https://huggingface.co/datasets/unimelb-nlp/wikiann) | [Data Description](https://huggingface.co/datasets/unimelb-nlp/wikiann#dataset-structure)
