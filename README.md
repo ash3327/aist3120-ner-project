@@ -13,7 +13,10 @@ The project evaluated three distinct deep learning architectures for Named Entit
 * **SpaCy:** (Responsible: Square) Explored the key approaches used in the SpaCy library, including hash embeddings and trasition-based models.
 * **BERT (Bidirectional Encoder Representations from Transformers):** (Responsible: Sam/Ash) Fine-tuned the `bert-base-cased` model over NER task, with following modifications:
     * **Aggregation Strategies:** Improved aggregation method to make sure that each input word is not split into parts in the output.
-    * **Masking:** Masked by chance 15% of named entities in the training data and adjusted the leraning rate and number of epochs for the fine-tuning process to test if encouraging the utilization of nearby context could improve the generalizability over unseen named-entities.
+    * **Masking:** Masked by chance of named entities in the training data. 
+      * Hypothesis: Encouraging the utilization of nearby context could improve the generalizability over unseen named-entities.
+      * Result: Not effective, instead harms the generalizability.
+      ![Seen vs Unseen Performance](/results/seen_unseen_comparison_conll.png)
 * **Gemma 3 (Decoder LLM):** (Responsible: Square) Tested the performance by using decoder LLMs on NER tasks, guided using prompt engineering. Ensured JSON output. Evaluated on both zero-shot (only instructions) and few-shot (instructions plus examples) cases.
 
 For more experimental data, please see the [report](/AIST3120_Final_Project_Report.pdf) for more information.
