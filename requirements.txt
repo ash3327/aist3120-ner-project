@@ -24,3 +24,13 @@ torchcrf
 
 # openai
 openai
+
+
+# plotting
+matplotlib
+seaborn
+
+# pandas
+pandas
+
+
