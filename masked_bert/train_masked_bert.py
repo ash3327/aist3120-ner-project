@@ -119,7 +119,7 @@ def ensure_output_dir(output_dir):
     if free < 1e9:  # Less than 1GB free space
         raise RuntimeError(f"Insufficient disk space in {output_dir}. Free up space and try again.")
 
-def main(checkpoint_path=None):
+def train(checkpoint_path=None, masked_p=0.15, version_id="v6"):
     # Set random seed
     torch.manual_seed(42)
     random.seed(42)
@@ -127,25 +127,27 @@ def main(checkpoint_path=None):
     
     # Load dataset
     print("Loading CoNLL-2003 dataset...")
-    raw_dataset = load_dataset("eriktks/conll2003")
+    raw_dataset = load_dataset("eriktks/conll2003", trust_remote_code=True)
     
     # =====================================================
     # Parameters Section
     # =====================================================
-    base_model = "distilbert-base-cased" # v1,v2,v3
-    base_model = "dslim/bert-base-NER" # v4
+    base_model = "distilbert-base-cased" # v1,v2,v3,v6
+    # base_model = "dslim/bert-base-NER" # v4
     require_reinitlialize = True # v1,v2,v3
-    require_reinitlialize = True # v4
+    require_reinitlialize = True # v4,v6
 
-    output_dir = "runs/bert_ft_v5"
+    output_dir = f"runs/bert_ft_{version_id}_masked"
     ratio = 1 # v1-v4
-    ratio = 3 # v5 
+    ratio = 3 # v5,v6
     num_epochs = 3 # v1-v4
-    num_epochs = 3*ratio # v5
-    batch_size = 32 # v1,v2,v3,v5
+    num_epochs = 3*ratio # v5,v6
+    batch_size = 32 # v1,v2,v3,v5,v6
     # batch_size = 16 # v4
     lr, weight_decay = 2e-5, 0.01 # v1-v4
-    lr, weight_decay = 2e-5/ratio, 0.01/ratio # v5
+    lr, weight_decay = 2e-5/ratio, 0.01/ratio # v5,v6
+
+    print(f"Version ID: {version_id}, Masked P: {masked_p}")
     # =====================================================
     
     # Initialize tokenizer
@@ -171,7 +173,7 @@ def main(checkpoint_path=None):
     ensure_output_dir(output_dir)
     
     # Create datasets
-    train_dataset = MaskedNERDataset(raw_dataset['train'], tokenizer)
+    train_dataset = MaskedNERDataset(raw_dataset['train'], tokenizer, mask_probability=masked_p)
     eval_dataset = MaskedNERDataset(raw_dataset['validation'], tokenizer, mask_probability=0.0)
     
     # Data collator
@@ -187,7 +189,7 @@ def main(checkpoint_path=None):
         per_device_eval_batch_size=batch_size,
         num_train_epochs=num_epochs,
         weight_decay=weight_decay,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
         metric_for_best_model="f1",
@@ -224,5 +226,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint_path", type=str, default=None, help="Path to model checkpoint")
+    parser.add_argument("-p","--masked_p", type=float, default=0.15, help="Masking probability for named entities")
+    parser.add_argument("-v","--version_id", type=str, default="v6", help="Version identifier for the model")
     args = parser.parse_args()
-    main(checkpoint_path=args.checkpoint_path)
+    train(checkpoint_path=args.checkpoint_path, masked_p=args.masked_p, version_id=args.version_id)
